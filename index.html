@@ -3,33 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ops Communication Admin</title>
+    <title>Message Creation Builder</title>
     <style>
-        /* --- 7-Eleven Branding & Modern UI --- */
+        /* --- Branding & Core UI --- */
         :root {
             --se-orange: #F58220;
             --se-red: #EE3124;
             --se-green: #008060;
             --se-black: #2d2d2d;
             --bg-gray: #f4f6f8;
+            --border-color: #ddd;
         }
 
         body {
             font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
             background-color: var(--bg-gray);
             margin: 0;
-            padding: 20px;
+            padding: 40px 20px;
             color: var(--se-black);
         }
 
         .widget-container {
-            max-width: 700px;
+            max-width: 800px;
             margin: 0 auto;
             background: white;
             border-radius: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             overflow: hidden;
             border-top: 6px solid var(--se-orange);
+            margin-bottom: 40px;
         }
 
         .header {
@@ -41,151 +43,85 @@
             justify-content: space-between;
         }
 
-        .header h2 {
-            margin: 0;
-            color: var(--se-green);
-            font-weight: 700;
-        }
+        .header h2 { margin: 0; color: var(--se-green); font-weight: 700; }
+        .header .badge { background-color: var(--se-red); color: white; padding: 4px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold; }
 
-        .header .badge {
-            background-color: var(--se-red);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
+        form { padding: 30px; }
+        .form-group { margin-bottom: 24px; }
+        label { display: block; margin-bottom: 8px; font-weight: 600; color: #444; }
+        .sub-label { display: block; font-size: 0.85rem; color: #888; margin-bottom: 8px; }
 
-        form {
-            padding: 30px;
+        /* Inputs */
+        input[type="text"], select, textarea {
+            width: 100%; padding: 12px; border: 2px solid var(--border-color);
+            border-radius: 6px; font-size: 1rem; transition: border-color 0.3s;
+            box-sizing: border-box; font-family: inherit;
         }
+        input[type="text"]:focus, select:focus, textarea:focus { border-color: var(--se-green); outline: none; }
 
-        .form-group {
-            margin-bottom: 24px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #444;
-        }
-
-        .sub-label {
-            display: block;
-            font-size: 0.85rem;
-            color: #888;
-            margin-bottom: 8px;
-        }
-
-        /* Input Styling */
-        input[type="text"],
-        select {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-            box-sizing: border-box;
-        }
-
-        input[type="text"]:focus,
-        select:focus {
-            border-color: var(--se-green);
-            outline: none;
-        }
-
-        /* File Upload Styling */
-        .file-drop-area {
-            position: relative;
-            display: flex;
-            align-items: center;
-            width: 100%;
-            padding: 12px;
-            border: 2px dashed #ccc;
-            border-radius: 6px;
-            transition: 0.2s;
-            background-color: #fafafa;
-            box-sizing: border-box;
-        }
-
-        .file-drop-area.active {
-            border-color: var(--se-orange);
-            background-color: #fffaf5;
-        }
-
-        .file-msg {
-            color: #666;
-            margin-left: 10px;
-            font-size: 0.9rem;
-        }
-
-        input[type="file"] {
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 100%;
-            opacity: 0;
-            cursor: pointer;
-        }
-
-        /* Checkbox */
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-        }
-
-        .checkbox-group input {
-            width: 20px;
-            height: 20px;
-            margin-right: 10px;
-            accent-color: var(--se-green);
-        }
-
-        /* Button */
-        button.submit-btn {
-            width: 100%;
-            padding: 15px;
-            background-color: var(--se-green);
-            color: white;
-            border: none;
-            border-radius: 6px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        button.submit-btn:hover {
-            background-color: #006b50;
-        }
-
-        button.submit-btn:disabled {
-            background-color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Console Output */
-        #console-output {
-            background: #222;
-            color: #0f0;
-            padding: 15px;
-            font-family: monospace;
-            font-size: 0.85rem;
-            display: none;
-            max-height: 200px;
-            overflow-y: auto;
-            border-top: 1px solid #444;
+        /* Smart Search Area */
+        .smart-search-area { background: #fafafa; padding: 15px; border: 1px solid #eee; border-radius: 6px; }
+        textarea.store-input {
+            font-family: 'Monaco', 'Menlo', monospace; 
+            font-size: 0.9rem; height: 100px; resize: vertical;
         }
         
-        .log-entry { margin: 4px 0; border-bottom: 1px solid #333; padding-bottom: 2px;}
-        .log-error { color: #ff5555; }
-        .log-success { color: #55ff55; }
+        /* Table Styles */
+        .table-container { margin-top: 15px; border: 1px solid #eee; border-radius: 4px; overflow: hidden; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th { background: #eee; text-align: left; padding: 10px; font-weight: 600; }
+        td { padding: 8px 10px; border-bottom: 1px solid #f1f1f1; }
+        tr:last-child td { border-bottom: none; }
+        .status-active { color: var(--se-green); font-weight: bold; }
+        .status-inactive { color: var(--se-red); font-weight: bold; }
 
+        /* Pagination */
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #fff; border-top: 1px solid #eee; }
+        .page-btn { padding: 5px 10px; background: #eee; border: none; border-radius: 4px; cursor: pointer; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .page-info { font-size: 0.85rem; color: #666; }
+
+        /* Error Box */
+        .error-summary {
+            display: none;
+            background-color: #fff5f5; border: 1px solid #fc8181;
+            color: #c53030; padding: 15px; border-radius: 6px; margin-bottom: 20px;
+        }
+        .error-title { font-weight: bold; display: block; margin-bottom: 5px; }
+
+        /* Buttons */
+        .btn-secondary { background: #666; color: white; padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; margin-top: 8px; }
+        
+        button.submit-btn {
+            width: 100%; padding: 15px; background-color: var(--se-green); color: white;
+            border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer; transition: background 0.3s; text-transform: uppercase; letter-spacing: 1px;
+        }
+        button.submit-btn:hover { background-color: #006b50; }
+        button.submit-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        /* File Upload */
+        .file-drop-area {
+            position: relative; display: flex; align-items: center; width: 100%;
+            padding: 12px; border: 2px dashed #ccc; border-radius: 6px;
+            background-color: #fafafa; box-sizing: border-box;
+        }
+        .file-drop-area.active { border-color: var(--se-orange); background-color: #fffaf5; }
+        input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        /* Past Submissions Section */
+        .past-submissions { max-width: 800px; margin: 0 auto; }
+        .submission-card {
+            background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+        }
+        .sub-details h4 { margin: 0 0 5px 0; color: #333; }
+        .sub-details p { margin: 0; color: #777; font-size: 0.9rem; }
+        .btn-edit { background: white; border: 2px solid var(--se-orange); color: var(--se-orange); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-edit:hover { background: var(--se-orange); color: white; }
+
+        /* Console Output (Hidden for cleaner UI, can be toggled) */
+        #console-output { display: none; }
     </style>
 </head>
 <body>
@@ -199,261 +135,261 @@
     <form id="opsForm">
         
         <div class="form-group">
-            <label for="postTitle">5. Post Title</label>
+            <label for="postTitle">Post Title</label>
             <input type="text" id="postTitle" placeholder="e.g. Q4 Audit Requirements" required>
         </div>
 
         <div class="form-group">
-            <label for="category">4. Category</label>
+            <label for="category">Category</label>
             <select id="category" required>
                 <option value="" disabled selected>Select a category</option>
                 <option value="Merchandising">Merchandising</option>
                 <option value="Marketing">Marketing</option>
                 <option value="Audit">Audit</option>
+                <option value="Operations">Operations</option>
             </select>
         </div>
 
         <div class="form-group">
-            <label>1. Store Target List (CSV)</label>
-            <span class="sub-label">Column Header: <code>Store ID</code></span>
-            <div class="file-drop-area">
-                <span class="file-msg">Drag and drop or click to select CSV</span>
-                <input type="file" id="csvStores" accept=".csv" required>
+            <label>Target Stores (Smart Search)</label>
+            <span class="sub-label">Paste Store IDs below. Spaces, commas, or new lines act as separators.</span>
+            
+            <div class="smart-search-area">
+                <textarea id="storeInput" class="store-input" placeholder="Paste IDs here (e.g., 10001 10002 10005)..."></textarea>
+                <button type="button" class="btn-secondary" onclick="verifyStores()">Verify Stores</button>
             </div>
+
+            <div class="table-container" id="resultsContainer" style="display:none;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Store ID</th>
+                            <th>Store Name</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="storeTableBody">
+                        </tbody>
+                </table>
+                <div class="pagination">
+                    <button type="button" class="page-btn" id="prevPageBtn" onclick="changePage(-1)">Previous</button>
+                    <span class="page-info" id="pageInfo">Page 1 of 1</span>
+                    <button type="button" class="page-btn" id="nextPageBtn" onclick="changePage(1)">Next</button>
+                </div>
+            </div>
+            <p id="storeCountMsg" style="font-size: 0.9rem; color: var(--se-green); font-weight:bold; margin-top:8px;"></p>
         </div>
 
         <div class="form-group">
-            <label>2. Task List (CSV)</label>
+            <label>Task List (CSV)</label>
             <span class="sub-label">Cols: <code>Task Content</code>, <code>Description</code>, <code>Due Date</code></span>
             <div class="file-drop-area">
                 <span class="file-msg">Drag and drop or click to select CSV</span>
-                <input type="file" id="csvTasks" accept=".csv" required>
+                <input type="file" id="csvTasks" accept=".csv">
             </div>
         </div>
 
         <div class="form-group">
-            <label>3. Field Merges (CSV)</label>
+            <label>Field Merges (CSV)</label>
             <span class="sub-label">Updates user attributes via import API</span>
             <div class="file-drop-area">
                 <span class="file-msg">Drag and drop or click to select CSV</span>
-                <input type="file" id="csvMerges" accept=".csv" required>
+                <input type="file" id="csvMerges" accept=".csv">
             </div>
         </div>
 
-        <div class="form-group checkbox-group">
-            <input type="checkbox" id="notifyUsers">
-            <label for="notifyUsers" style="margin-bottom:0">Notify users in the new channel</label>
+        <div class="form-group" style="display:flex; align-items:center;">
+            <input type="checkbox" id="notifyUsers" style="width:20px; height:20px; margin-right:10px;">
+            <label for="notifyUsers" style="margin-bottom:0; cursor:pointer;">Notify users in the new channel</label>
+        </div>
+
+        <div id="submissionError" class="error-summary">
+            <span class="alert-title">⚠️ Submission Blocked: Data Integrity Issues</span>
+            <p style="margin: 5px 0;">The following IDs are invalid or inactive:</p>
+            <span id="invalidIdList" style="font-family:monospace;"></span>
         </div>
 
         <button type="submit" class="submit-btn" id="submitBtn">Create Adhoc Post</button>
     </form>
+</div>
+
+<div class="past-submissions">
+    <h3 style="color:#555; margin-bottom:15px;">Past Submissions</h3>
     
-    <div id="console-output"></div>
+    <div class="submission-card">
+        <div class="sub-details">
+            <h4>Safety Protocol Update</h4>
+            <p>Operations • 2,400 Stores • Posted 2 days ago</p>
+        </div>
+        <button class="btn-edit" onclick="loadPreviousPost('Safety Protocol Update')">Edit / View</button>
+    </div>
+
+    <div class="submission-card">
+        <div class="sub-details">
+            <h4>Q4 Merch Plan</h4>
+            <p>Merchandising • 13,000 Stores • Posted 1 week ago</p>
+        </div>
+        <button class="btn-edit" onclick="loadPreviousPost('Q4 Merch Plan')">Edit / View</button>
+    </div>
+
+    <div class="submission-card">
+        <div class="sub-details">
+            <h4>System Maintenance Alert</h4>
+            <p>IT/Audit • 500 Stores • Posted 2 weeks ago</p>
+        </div>
+        <button class="btn-edit" onclick="loadPreviousPost('System Maintenance Alert')">Edit / View</button>
+    </div>
 </div>
 
 <script>
-    // --- CONFIGURATION ---
-// Check if CONFIG exists (handling the case where config.js is missing)
-    if (typeof CONFIG === 'undefined') {
-        alert("Error: config.js not found. Please create it with your API credentials.");
-        throw new Error("Configuration missing");
-    }
-
-    const API_TOKEN = CONFIG.API_TOKEN; 
-    const INSTALLATION_ID = CONFIG.INSTALLATION_ID;
-    const BASE_URL = CONFIG.BASE_URL;
-
-    // --- UI HELPERS ---
-    const logOutput = document.getElementById('console-output');
-    
-    function log(message, type = 'info') {
-        logOutput.style.display = 'block';
-        const div = document.createElement('div');
-        div.className = 'log-entry ' + (type === 'error' ? 'log-error' : 'log-success');
-        div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        logOutput.appendChild(div);
-        logOutput.scrollTop = logOutput.scrollHeight;
-    }
-
-    // --- CSV PARSER ---
-    // Reads a file input and returns an array of objects
-    function parseCSV(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const rows = text.split('\n').filter(row => row.trim() !== '');
-                const headers = rows[0].split(',').map(h => h.trim());
-                const data = [];
-                
-                for (let i = 1; i < rows.length; i++) {
-                    const values = rows[i].split(',');
-                    if(values.length === headers.length) {
-                        const obj = {};
-                        headers.forEach((header, index) => {
-                            obj[header] = values[index].trim();
-                        });
-                        data.push(obj);
-                    }
-                }
-                resolve(data);
-            };
-            reader.onerror = reject;
-            reader.readAsText(file);
-        });
-    }
-
-    // --- API HANDLERS ---
-    
-    async function apiRequest(endpoint, method, body = null) {
-        const headers = {
-            'Authorization': `Bearer ${API_TOKEN}`,
-            'Content-Type': 'application/json'
+    // --- 1. MOCK DATABASE (13,000 Stores) ---
+    // Simulating a large DB locally for the demo
+    console.log("Generating Mock Database...");
+    const MOCK_DB = Array.from({ length: 13000 }, (_, i) => {
+        const id = (10000 + i).toString();
+        // Mark every 50th store as "Inactive" to demonstrate data validation
+        const isActive = i % 50 !== 0; 
+        return {
+            id: id,
+            name: `7-Eleven Store #${id}`,
+            status: isActive ? 'Active' : 'Inactive'
         };
-
-        const config = { method, headers };
-        if (body) config.body = JSON.stringify(body);
-
-        try {
-            const response = await fetch(`${BASE_URL}${endpoint}`, config);
-            if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
-            return await response.json();
-        } catch (error) {
-            log(`Request failed for ${endpoint}: ${error.message}`, 'error');
-            throw error;
-        }
-    }
-
-    // --- MAIN LOGIC ---
-
-    document.getElementById('opsForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-        const btn = document.getElementById('submitBtn');
-        btn.disabled = true;
-        btn.textContent = "Processing...";
-        log("Starting Operation...");
-
-        try {
-            // 1. Parse CSVs
-            const storeData = await parseCSV(document.getElementById('csvStores').files[0]);
-            const taskData = await parseCSV(document.getElementById('csvTasks').files[0]);
-            const mergeData = await parseCSV(document.getElementById('csvMerges').files[0]);
-            
-            log(`Parsed CSVs. Stores: ${storeData.length}, Tasks: ${taskData.length}, Merges: ${mergeData.length}`);
-
-            // 2. Identify Users (Mock Logic: Matching Store ID to User Identifier)
-            // In reality, you might need to loop through Store IDs and call User API GET /users?externalID=...
-            // For this demo, we assume we collect User IDs into a list.
-            let targetUserIds = [];
-            log("Searching users by Store ID...");
-            
-            // Note: This loop can be slow if list is long. Ideally use a bulk endpoint if available.
-            /* for(let store of storeData) {
-                // Pseudo-code for user lookup
-                // const user = await apiRequest(`/users?q=${store['Store ID']}`, 'GET');
-                // if(user) targetUserIds.push(user.id);
-            }
-            */
-            // Mocking User IDs for success flow
-            targetUserIds = ["mock_user_1", "mock_user_2"]; 
-            log(`Targeting ${targetUserIds.length} users.`);
-
-            // 3. Create Channel
-            const category = document.getElementById('category').value;
-            const postTitle = document.getElementById('postTitle').value;
-            
-            log("Creating News Channel...");
-            // Assuming POST /channels creates a channel
-            const channelPayload = {
-                name: `${category}: ${postTitle} Channel`,
-                access: { users: targetUserIds } // Pseudo-schema for setting access
-            };
-            // const channelRes = await apiRequest('/channels', 'POST', channelPayload);
-            const channelId = "mock_channel_123"; // Replace with channelRes.id
-            log(`Channel Created: ${channelId}`);
-
-            // 4. Create Task List
-            log("Creating Task List...");
-            const taskListPayload = {
-                title: `${postTitle} - Tasks`,
-                userIds: targetUserIds
-            };
-            // const taskListRes = await apiRequest(`/tasks/${INSTALLATION_ID}/lists`, 'POST', taskListPayload);
-            const taskListId = "mock_list_456"; // Replace with taskListRes.id
-            log(`Task List Created: ${taskListId}`);
-
-            // 5. Create Individual Tasks & Build HTML for News
-            log("Creating Tasks and building News Content...");
-            let tasksHtml = "<h3>Action Required</h3><ul>";
-            
-            for (let task of taskData) {
-                // Add to Task API
-                const taskPayload = {
-                    listId: taskListId,
-                    title: task['Task Content'],
-                    description: task['Description'],
-                    dueDate: task['Due Date']
-                };
-                // await apiRequest(`/tasks/${INSTALLATION_ID}/task`, 'POST', taskPayload);
-                
-                // Add to HTML buffer
-                tasksHtml += `<li><strong>${task['Task Content']}</strong>: ${task['Description']} (Due: ${task['Due Date']})</li>`;
-            }
-            tasksHtml += "</ul>";
-            log("Tasks uploaded.");
-
-            // 6. CSV Import for Field Merges
-            // Typically requires creating an import job then uploading data.
-            log("Processing User Attribute Updates (CSV Import)...");
-            // const importRes = await apiRequest('/users/imports', 'POST', { ... });
-            // await apiRequest(`/users/imports/${importRes.id}`, 'POST', mergeData);
-            
-            // Generate HTML table for field merges to show in News
-            let mergeHtml = "<h3>Updated Metrics</h3><table border='1' cellpadding='5'><tr>";
-            if (mergeData.length > 0) {
-                // Headers
-                Object.keys(mergeData[0]).forEach(k => mergeHtml += `<th>${k}</th>`);
-                mergeHtml += "</tr>";
-                // Rows (Limit to first 5 rows for display to avoid huge posts?)
-                mergeData.forEach(row => {
-                    mergeHtml += "<tr>";
-                    Object.values(row).forEach(v => mergeHtml += `<td>${v}</td>`);
-                    mergeHtml += "</tr>";
-                });
-                mergeHtml += "</table>";
-            }
-
-            // 7. Create News Post
-            const notify = document.getElementById('notifyUsers').checked;
-            log(`Creating News Post (Notification: ${notify})...`);
-            
-            const newsPayload = {
-                title: postTitle,
-                content: `
-                    <p><strong>Category:</strong> ${category}</p>
-                    ${tasksHtml}
-                    <hr>
-                    ${mergeHtml}
-                `,
-                notification: notify
-            };
-            
-            // await apiRequest(`/channels/${channelId}/posts`, 'POST', newsPayload);
-            log("News Post Created Successfully!", "success");
-
-            alert("Operation Complete!");
-            btn.textContent = "Done";
-            btn.classList.add('finished');
-
-        } catch (err) {
-            log(err.message, 'error');
-            alert("An error occurred. Check the console log below.");
-            btn.disabled = false;
-            btn.textContent = "Try Again";
-        }
     });
 
-    // File Input UI Logic
+    // --- 2. STORE SEARCH STATE ---
+    let validStores = [];
+    let invalidIds = [];
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 5;
+
+    // --- 3. SEARCH ALGORITHM ---
+    function verifyStores() {
+        const rawInput = document.getElementById('storeInput').value;
+        const errorBox = document.getElementById('submissionError');
+        const resultsContainer = document.getElementById('resultsContainer');
+        const countMsg = document.getElementById('storeCountMsg');
+
+        // Reset State
+        validStores = [];
+        invalidIds = [];
+        errorBox.style.display = 'none';
+
+        if (!rawInput.trim()) {
+            resultsContainer.style.display = 'none';
+            countMsg.innerText = "";
+            return;
+        }
+
+        // A. Smart Split: Handle spaces, commas, newlines
+        const searchIds = rawInput.split(/[\s,]+/).filter(Boolean);
+        const uniqueSearchIds = [...new Set(searchIds)]; // Dedup input
+
+        // B. Lookup Algorithm
+        // For 13k items, a simple filter is fast enough. For 1M+, we'd use a Map/Object for O(1) lookup.
+        const dbMap = new Map(MOCK_DB.map(s => [s.id, s]));
+
+        uniqueSearchIds.forEach(id => {
+            const store = dbMap.get(id);
+            if (store) {
+                // Check if Active
+                if (store.status === 'Active') {
+                    validStores.push(store);
+                } else {
+                    // It exists but is Inactive -> Treat as Invalid for this purpose
+                    invalidIds.push(`${id} (Inactive)`);
+                }
+            } else {
+                // ID doesn't exist
+                invalidIds.push(`${id} (Not Found)`);
+            }
+        });
+
+        // C. Render Results
+        currentPage = 1;
+        renderTable();
+        resultsContainer.style.display = 'block';
+        countMsg.innerText = `Found ${validStores.length} valid stores ready for targeting.`;
+
+        // D. Handle Errors
+        if (invalidIds.length > 0) {
+            document.getElementById('invalidIdList').innerText = invalidIds.join(', ');
+            errorBox.style.display = 'block';
+            // Optional: Auto-scroll to error?
+            // errorBox.scrollIntoView({behavior: "smooth"}); 
+        }
+    }
+
+    // --- 4. PAGINATION LOGIC ---
+    function renderTable() {
+        const tbody = document.getElementById('storeTableBody');
+        tbody.innerHTML = '';
+
+        const start = (currentPage - 1) * ITEMS_PER_PAGE;
+        const end = start + ITEMS_PER_PAGE;
+        const pageData = validStores.slice(start, end);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No valid stores found yet.</td></tr>';
+            updatePaginationControls(0);
+            return;
+        }
+
+        pageData.forEach(store => {
+            const row = `<tr>
+                <td>${store.id}</td>
+                <td>${store.name}</td>
+                <td class="status-active">${store.status}</td>
+            </tr>`;
+            tbody.innerHTML += row;
+        });
+
+        updatePaginationControls(validStores.length);
+    }
+
+    function changePage(dir) {
+        const maxPage = Math.ceil(validStores.length / ITEMS_PER_PAGE);
+        if (dir === -1 && currentPage > 1) currentPage--;
+        if (dir === 1 && currentPage < maxPage) currentPage++;
+        renderTable();
+    }
+
+    function updatePaginationControls(total) {
+        const maxPage = Math.ceil(total / ITEMS_PER_PAGE) || 1;
+        document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${maxPage}`;
+        document.getElementById('prevPageBtn').disabled = currentPage === 1;
+        document.getElementById('nextPageBtn').disabled = currentPage === maxPage;
+    }
+
+    // --- 5. FORM SUBMISSION ---
+    document.getElementById('opsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // Final Data Integrity Check
+        if (invalidIds.length > 0) {
+            alert("Please fix the invalid Store IDs listed at the bottom before submitting.");
+            document.getElementById('submissionError').scrollIntoView({behavior: "smooth"});
+            return;
+        }
+        
+        if (validStores.length === 0) {
+            alert("Please verify and select at least one valid store.");
+            return;
+        }
+
+        const btn = document.getElementById('submitBtn');
+        const originalText = btn.innerText;
+        btn.textContent = "Processing...";
+        btn.disabled = true;
+
+        // Simulate API delay
+        setTimeout(() => {
+            alert(`Success! Adhoc Post created for ${validStores.length} stores.`);
+            btn.textContent = originalText;
+            btn.disabled = false;
+        }, 1500);
+    });
+
+    // --- 6. FILE UI HELPERS ---
     document.querySelectorAll('input[type="file"]').forEach(input => {
         input.addEventListener('change', function() {
             const fileName = this.files[0] ? this.files[0].name : "Drag and drop or click to select CSV";
@@ -461,6 +397,14 @@
             this.parentElement.classList.add('active');
         });
     });
+
+    // --- 7. PAST SUBMISSIONS HELPER ---
+    function loadPreviousPost(title) {
+        alert(`Loading editor for previous post: "${title}"...\n(This would pre-fill the form in a real app)`);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        document.getElementById('postTitle').value = title;
+        // Logic to pre-fill other fields would go here
+    }
 
 </script>
 
