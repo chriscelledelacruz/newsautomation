@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ops Communication Admin</title>
+    <style>
+        /* --- 7-Eleven Branding & Modern UI --- */
+        :root {
+            --se-orange: #F58220;
+            --se-red: #EE3124;
+            --se-green: #008060;
+            --se-black: #2d2d2d;
+            --bg-gray: #f4f6f8;
+        }
+
+        body {
+            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            background-color: var(--bg-gray);
+            margin: 0;
+            padding: 20px;
+            color: var(--se-black);
+        }
+
+        .widget-container {
+            max-width: 700px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 6px solid var(--se-orange);
+        }
+
+        .header {
+            padding: 24px;
+            background: white;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .header h2 {
+            margin: 0;
+            color: var(--se-green);
+            font-weight: 700;
+        }
+
+        .header .badge {
+            background-color: var(--se-red);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        form {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+        }
+
+        .sub-label {
+            display: block;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        /* Input Styling */
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+
+        input[type="text"]:focus,
+        select:focus {
+            border-color: var(--se-green);
+            outline: none;
+        }
+
+        /* File Upload Styling */
+        .file-drop-area {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 12px;
+            border: 2px dashed #ccc;
+            border-radius: 6px;
+            transition: 0.2s;
+            background-color: #fafafa;
+            box-sizing: border-box;
+        }
+
+        .file-drop-area.active {
+            border-color: var(--se-orange);
+            background-color: #fffaf5;
+        }
+
+        .file-msg {
+            color: #666;
+            margin-left: 10px;
+            font-size: 0.9rem;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        /* Checkbox */
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+        }
+
+        .checkbox-group input {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            accent-color: var(--se-green);
+        }
+
+        /* Button */
+        button.submit-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: var(--se-green);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        button.submit-btn:hover {
+            background-color: #006b50;
+        }
+
+        button.submit-btn:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Console Output */
+        #console-output {
+            background: #222;
+            color: #0f0;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            display: none;
+            max-height: 200px;
+            overflow-y: auto;
+            border-top: 1px solid #444;
+        }
+        
+        .log-entry { margin: 4px 0; border-bottom: 1px solid #333; padding-bottom: 2px;}
+        .log-error { color: #ff5555; }
+        .log-success { color: #55ff55; }
+
+    </style>
+</head>
+<body>
+
+<div class="widget-container">
+    <div class="header">
+        <h2>Ops Admin Portal</h2>
+        <span class="badge">ADHOC POST</span>
+    </div>
+
+    <form id="opsForm">
+        
+        <div class="form-group">
+            <label for="postTitle">5. Post Title</label>
+            <input type="text" id="postTitle" placeholder="e.g. Q4 Audit Requirements" required>
+        </div>
+
+        <div class="form-group">
+            <label for="category">4. Category</label>
+            <select id="category" required>
+                <option value="" disabled selected>Select a category</option>
+                <option value="Merchandising">Merchandising</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Audit">Audit</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>1. Store Target List (CSV)</label>
+            <span class="sub-label">Column Header: <code>Store ID</code></span>
+            <div class="file-drop-area">
+                <span class="file-msg">Drag and drop or click to select CSV</span>
+                <input type="file" id="csvStores" accept=".csv" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>2. Task List (CSV)</label>
+            <span class="sub-label">Cols: <code>Task Content</code>, <code>Description</code>, <code>Due Date</code></span>
+            <div class="file-drop-area">
+                <span class="file-msg">Drag and drop or click to select CSV</span>
+                <input type="file" id="csvTasks" accept=".csv" required>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>3. Field Merges (CSV)</label>
+            <span class="sub-label">Updates user attributes via import API</span>
+            <div class="file-drop-area">
+                <span class="file-msg">Drag and drop or click to select CSV</span>
+                <input type="file" id="csvMerges" accept=".csv" required>
+            </div>
+        </div>
+
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="notifyUsers">
+            <label for="notifyUsers" style="margin-bottom:0">Notify users in the new channel</label>
+        </div>
+
+        <button type="submit" class="submit-btn" id="submitBtn">Create Adhoc Post</button>
+    </form>
+    
+    <div id="console-output"></div>
+</div>
+
+<script>
+    // --- CONFIGURATION ---
+    // REPLACE THESE VALUES WITH YOUR ACTUAL CREDENTIALS
+    const API_TOKEN = 'YOUR_BEARER_TOKEN_HERE'; 
+    const INSTALLATION_ID = 'YOUR_TASKS_PLUGIN_INSTALLATION_ID';
+    const BASE_URL = 'https://app.staffbase.com/api'; // Adjusted for standard API path if needed
+
+    // --- UI HELPERS ---
+    const logOutput = document.getElementById('console-output');
+    
+    function log(message, type = 'info') {
+        logOutput.style.display = 'block';
+        const div = document.createElement('div');
+        div.className = 'log-entry ' + (type === 'error' ? 'log-error' : 'log-success');
+        div.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logOutput.appendChild(div);
+        logOutput.scrollTop = logOutput.scrollHeight;
+    }
+
+    // --- CSV PARSER ---
+    // Reads a file input and returns an array of objects
+    function parseCSV(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').filter(row => row.trim() !== '');
+                const headers = rows[0].split(',').map(h => h.trim());
+                const data = [];
+                
+                for (let i = 1; i < rows.length; i++) {
+                    const values = rows[i].split(',');
+                    if(values.length === headers.length) {
+                        const obj = {};
+                        headers.forEach((header, index) => {
+                            obj[header] = values[index].trim();
+                        });
+                        data.push(obj);
+                    }
+                }
+                resolve(data);
+            };
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
+    // --- API HANDLERS ---
+    
+    async function apiRequest(endpoint, method, body = null) {
+        const headers = {
+            'Authorization': `Bearer ${API_TOKEN}`,
+            'Content-Type': 'application/json'
+        };
+
+        const config = { method, headers };
+        if (body) config.body = JSON.stringify(body);
+
+        try {
+            const response = await fetch(`${BASE_URL}${endpoint}`, config);
+            if (!response.ok) throw new Error(`API Error: ${response.status} ${response.statusText}`);
+            return await response.json();
+        } catch (error) {
+            log(`Request failed for ${endpoint}: ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    // --- MAIN LOGIC ---
+
+    document.getElementById('opsForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const btn = document.getElementById('submitBtn');
+        btn.disabled = true;
+        btn.textContent = "Processing...";
+        log("Starting Operation...");
+
+        try {
+            // 1. Parse CSVs
+            const storeData = await parseCSV(document.getElementById('csvStores').files[0]);
+            const taskData = await parseCSV(document.getElementById('csvTasks').files[0]);
+            const mergeData = await parseCSV(document.getElementById('csvMerges').files[0]);
+            
+            log(`Parsed CSVs. Stores: ${storeData.length}, Tasks: ${taskData.length}, Merges: ${mergeData.length}`);
+
+            // 2. Identify Users (Mock Logic: Matching Store ID to User Identifier)
+            // In reality, you might need to loop through Store IDs and call User API GET /users?externalID=...
+            // For this demo, we assume we collect User IDs into a list.
+            let targetUserIds = [];
+            log("Searching users by Store ID...");
+            
+            // Note: This loop can be slow if list is long. Ideally use a bulk endpoint if available.
+            /* for(let store of storeData) {
+                // Pseudo-code for user lookup
+                // const user = await apiRequest(`/users?q=${store['Store ID']}`, 'GET');
+                // if(user) targetUserIds.push(user.id);
+            }
+            */
+            // Mocking User IDs for success flow
+            targetUserIds = ["mock_user_1", "mock_user_2"]; 
+            log(`Targeting ${targetUserIds.length} users.`);
+
+            // 3. Create Channel
+            const category = document.getElementById('category').value;
+            const postTitle = document.getElementById('postTitle').value;
+            
+            log("Creating News Channel...");
+            // Assuming POST /channels creates a channel
+            const channelPayload = {
+                name: `${category}: ${postTitle} Channel`,
+                access: { users: targetUserIds } // Pseudo-schema for setting access
+            };
+            // const channelRes = await apiRequest('/channels', 'POST', channelPayload);
+            const channelId = "mock_channel_123"; // Replace with channelRes.id
+            log(`Channel Created: ${channelId}`);
+
+            // 4. Create Task List
+            log("Creating Task List...");
+            const taskListPayload = {
+                title: `${postTitle} - Tasks`,
+                userIds: targetUserIds
+            };
+            // const taskListRes = await apiRequest(`/tasks/${INSTALLATION_ID}/lists`, 'POST', taskListPayload);
+            const taskListId = "mock_list_456"; // Replace with taskListRes.id
+            log(`Task List Created: ${taskListId}`);
+
+            // 5. Create Individual Tasks & Build HTML for News
+            log("Creating Tasks and building News Content...");
+            let tasksHtml = "<h3>Action Required</h3><ul>";
+            
+            for (let task of taskData) {
+                // Add to Task API
+                const taskPayload = {
+                    listId: taskListId,
+                    title: task['Task Content'],
+                    description: task['Description'],
+                    dueDate: task['Due Date']
+                };
+                // await apiRequest(`/tasks/${INSTALLATION_ID}/task`, 'POST', taskPayload);
+                
+                // Add to HTML buffer
+                tasksHtml += `<li><strong>${task['Task Content']}</strong>: ${task['Description']} (Due: ${task['Due Date']})</li>`;
+            }
+            tasksHtml += "</ul>";
+            log("Tasks uploaded.");
+
+            // 6. CSV Import for Field Merges
+            // Typically requires creating an import job then uploading data.
+            log("Processing User Attribute Updates (CSV Import)...");
+            // const importRes = await apiRequest('/users/imports', 'POST', { ... });
+            // await apiRequest(`/users/imports/${importRes.id}`, 'POST', mergeData);
+            
+            // Generate HTML table for field merges to show in News
+            let mergeHtml = "<h3>Updated Metrics</h3><table border='1' cellpadding='5'><tr>";
+            if (mergeData.length > 0) {
+                // Headers
+                Object.keys(mergeData[0]).forEach(k => mergeHtml += `<th>${k}</th>`);
+                mergeHtml += "</tr>";
+                // Rows (Limit to first 5 rows for display to avoid huge posts?)
+                mergeData.forEach(row => {
+                    mergeHtml += "<tr>";
+                    Object.values(row).forEach(v => mergeHtml += `<td>${v}</td>`);
+                    mergeHtml += "</tr>";
+                });
+                mergeHtml += "</table>";
+            }
+
+            // 7. Create News Post
+            const notify = document.getElementById('notifyUsers').checked;
+            log(`Creating News Post (Notification: ${notify})...`);
+            
+            const newsPayload = {
+                title: postTitle,
+                content: `
+                    <p><strong>Category:</strong> ${category}</p>
+                    ${tasksHtml}
+                    <hr>
+                    ${mergeHtml}
+                `,
+                notification: notify
+            };
+            
+            // await apiRequest(`/channels/${channelId}/posts`, 'POST', newsPayload);
+            log("News Post Created Successfully!", "success");
+
+            alert("Operation Complete!");
+            btn.textContent = "Done";
+            btn.classList.add('finished');
+
+        } catch (err) {
+            log(err.message, 'error');
+            alert("An error occurred. Check the console log below.");
+            btn.disabled = false;
+            btn.textContent = "Try Again";
+        }
+    });
+
+    // File Input UI Logic
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function() {
+            const fileName = this.files[0] ? this.files[0].name : "Drag and drop or click to select CSV";
+            this.parentElement.querySelector('.file-msg').textContent = fileName;
+            this.parentElement.classList.add('active');
+        });
+    });
+
+</script>
+
+</body>
+</html>
