@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Message Creation Builder</title>
+    <title>Ops Communication Admin (POC Connected)</title>
+    <script src="config.js"></script>
     <style>
         /* --- Branding & Core UI --- */
         :root {
@@ -99,6 +100,7 @@
         }
         button.submit-btn:hover { background-color: #006b50; }
         button.submit-btn:disabled { background-color: #ccc; cursor: not-allowed; }
+        button.finished { background-color: #2d2d2d; cursor: default; }
 
         /* File Upload */
         .file-drop-area {
@@ -109,19 +111,14 @@
         .file-drop-area.active { border-color: var(--se-orange); background-color: #fffaf5; }
         input[type="file"] { position: absolute; left: 0; top: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 
-        /* Past Submissions Section */
-        .past-submissions { max-width: 800px; margin: 0 auto; }
-        .submission-card {
-            background: white; border-radius: 8px; padding: 20px; margin-bottom: 15px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center;
+        /* Logs Console */
+        .console-log {
+            background: #2d2d2d; color: #00ff9d; padding: 20px;
+            font-family: monospace; font-size: 0.85rem;
+            max-height: 200px; overflow-y: auto; display: none;
+            margin: 20px auto; border-radius: 8px; max-width: 800px;
         }
-        .sub-details h4 { margin: 0 0 5px 0; color: #333; }
-        .sub-details p { margin: 0; color: #777; font-size: 0.9rem; }
-        .btn-edit { background: white; border: 2px solid var(--se-orange); color: var(--se-orange); padding: 6px 14px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-edit:hover { background: var(--se-orange); color: white; }
-
-        /* Console Output (Hidden for cleaner UI, can be toggled) */
-        #console-output { display: none; }
+        .log-error { color: #ff6b6b; }
     </style>
 </head>
 <body>
@@ -156,7 +153,7 @@
             
             <div class="smart-search-area">
                 <textarea id="storeInput" class="store-input" placeholder="Paste IDs here (e.g., 10001 10002 10005)..."></textarea>
-                <button type="button" class="btn-secondary" onclick="verifyStores()">Verify Stores</button>
+                <button type="button" class="btn-secondary" id="verifyBtn" onclick="verifyStores()">Verify Stores</button>
             </div>
 
             <div class="table-container" id="resultsContainer" style="display:none;">
@@ -185,7 +182,7 @@
             <span class="sub-label">Cols: <code>Task Content</code>, <code>Description</code>, <code>Due Date</code></span>
             <div class="file-drop-area">
                 <span class="file-msg">Drag and drop or click to select CSV</span>
-                <input type="file" id="csvTasks" accept=".csv">
+                <input type="file" id="csvTasks" accept=".csv" required>
             </div>
         </div>
 
@@ -194,7 +191,7 @@
             <span class="sub-label">Updates user attributes via import API</span>
             <div class="file-drop-area">
                 <span class="file-msg">Drag and drop or click to select CSV</span>
-                <input type="file" id="csvMerges" accept=".csv">
+                <input type="file" id="csvMerges" accept=".csv" required>
             </div>
         </div>
 
@@ -213,137 +210,188 @@
     </form>
 </div>
 
+<div id="consoleLog" class="console-log">
+    <strong>System Logs:</strong><br>
+</div>
+
 <div class="past-submissions">
     <h3 style="color:#555; margin-bottom:15px;">Past Submissions</h3>
-    
     <div class="submission-card">
         <div class="sub-details">
             <h4>Safety Protocol Update</h4>
             <p>Operations • 2,400 Stores • Posted 2 days ago</p>
         </div>
-        <button class="btn-edit" onclick="loadPreviousPost('Safety Protocol Update')">Edit / View</button>
-    </div>
-
-    <div class="submission-card">
-        <div class="sub-details">
-            <h4>Q4 Merch Plan</h4>
-            <p>Merchandising • 13,000 Stores • Posted 1 week ago</p>
-        </div>
-        <button class="btn-edit" onclick="loadPreviousPost('Q4 Merch Plan')">Edit / View</button>
-    </div>
-
-    <div class="submission-card">
-        <div class="sub-details">
-            <h4>System Maintenance Alert</h4>
-            <p>IT/Audit • 500 Stores • Posted 2 weeks ago</p>
-        </div>
-        <button class="btn-edit" onclick="loadPreviousPost('System Maintenance Alert')">Edit / View</button>
+        <button class="btn-edit">View</button>
     </div>
 </div>
 
 <script>
-    // --- 1. MOCK DATABASE (13,000 Stores) ---
-    // Simulating a large DB locally for the demo
-    console.log("Generating Mock Database...");
-    const MOCK_DB = Array.from({ length: 13000 }, (_, i) => {
-        const id = (10000 + i).toString();
-        // Mark every 50th store as "Inactive" to demonstrate data validation
-        const isActive = i % 50 !== 0; 
-        return {
-            id: id,
-            name: `7-Eleven Store #${id}`,
-            status: isActive ? 'Active' : 'Inactive'
-        };
-    });
+    // --- 1. CONFIGURATION & HELPERS ---
+    
+    // Ensure config.js is loaded
+    if (typeof CONFIG === 'undefined') {
+        alert("CRITICAL ERROR: config.js is missing. Please create it with your API credentials.");
+    }
 
-    // --- 2. STORE SEARCH STATE ---
-    let validStores = [];
-    let invalidIds = [];
+    const { API_TOKEN, INSTALLATION_ID, BASE_URL } = CONFIG;
+
+    function log(msg, type = 'info') {
+        const consoleDiv = document.getElementById('consoleLog');
+        consoleDiv.style.display = 'block';
+        const span = type === 'error' ? '<span class="log-error">' : '<span>';
+        consoleDiv.innerHTML += `<div>${span}[${new Date().toLocaleTimeString()}] ${msg}</span></div>`;
+        consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        console.log(`[${type.toUpperCase()}] ${msg}`);
+    }
+
+    // Generic API Request Helper
+    async function apiRequest(endpoint, method, body = null) {
+        const headers = {
+            'Authorization': `Basic ${API_TOKEN}`, // Staffbase uses Basic Auth usually, or Bearer. Check your docs.
+            // If Bearer: 'Authorization': `Bearer ${API_TOKEN}`, 
+            'Content-Type': 'application/json'
+        };
+
+        // Note: For Basic Auth, token often needs to be base64 encoded 'username:password'.
+        // Assuming your config.js has the correct token format string provided.
+
+        const options = { method, headers };
+        if (body) options.body = JSON.stringify(body);
+
+        try {
+            const response = await fetch(`${BASE_URL}${endpoint}`, options);
+            if (!response.ok) {
+                const errText = await response.text();
+                throw new Error(`${response.status} ${response.statusText} - ${errText}`);
+            }
+            // Return JSON if content exists, else null
+            return response.status !== 204 ? await response.json() : null;
+        } catch (error) {
+            log(`API Failed (${endpoint}): ${error.message}`, 'error');
+            throw error;
+        }
+    }
+
+    // CSV Parser Helper
+    function parseCSV(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                const rows = text.split('\n').filter(r => r.trim() !== '');
+                const headers = rows[0].split(',').map(h => h.trim());
+                const data = rows.slice(1).map(row => {
+                    const values = row.split(',');
+                    return headers.reduce((obj, header, index) => {
+                        obj[header] = values[index] ? values[index].trim() : '';
+                        return obj;
+                    }, {});
+                });
+                resolve(data);
+            };
+            reader.onerror = reject;
+            reader.readAsText(file);
+        });
+    }
+
+
+    // --- 2. STORE VERIFICATION LOGIC (REAL API) ---
+    
+    let validStores = []; // Stores User Objects found via API
+    let invalidIds = [];  // IDs that 404'd
+    
+    // Pagination State
     let currentPage = 1;
     const ITEMS_PER_PAGE = 5;
 
-    // --- 3. SEARCH ALGORITHM ---
-    function verifyStores() {
+    async function verifyStores() {
         const rawInput = document.getElementById('storeInput').value;
         const errorBox = document.getElementById('submissionError');
         const resultsContainer = document.getElementById('resultsContainer');
         const countMsg = document.getElementById('storeCountMsg');
+        const verifyBtn = document.getElementById('verifyBtn');
 
-        // Reset State
+        // Reset
         validStores = [];
         invalidIds = [];
         errorBox.style.display = 'none';
+        
+        if (!rawInput.trim()) return;
 
-        if (!rawInput.trim()) {
-            resultsContainer.style.display = 'none';
-            countMsg.innerText = "";
-            return;
+        verifyBtn.disabled = true;
+        verifyBtn.innerText = "Checking API...";
+        log("Starting Batch Verification against User API...");
+
+        // 1. Clean Input
+        const searchIds = rawInput.split(/[\s,]+/).filter(Boolean);
+        const uniqueIds = [...new Set(searchIds)];
+
+        // 2. Fetch Loop (In a real app, use a bulk endpoint if available. Here we loop.)
+        // We limit concurrency to avoid browser stalling
+        
+        for (const id of uniqueIds) {
+            try {
+                // ASSUMPTION: User API allows search by ExternalID (Store ID)
+                // Endpoint: GET /users?externalID={id}
+                const res = await apiRequest(`/users?externalID=${id}`, 'GET');
+                
+                // Check if API returned a user list
+                if (res && res.data && res.data.length > 0) {
+                    const user = res.data[0]; // Assuming first match is correct
+                    validStores.push({
+                        id: id,
+                        userId: user.id, // We need the internal User ID for later steps
+                        name: `${user.firstName} ${user.lastName}`, 
+                        status: 'Active' // Assuming if they exist, they are active
+                    });
+                } else {
+                    invalidIds.push(id);
+                }
+            } catch (err) {
+                console.error(err);
+                invalidIds.push(`${id} (Error)`);
+            }
         }
 
-        // A. Smart Split: Handle spaces, commas, newlines
-        const searchIds = rawInput.split(/[\s,]+/).filter(Boolean);
-        const uniqueSearchIds = [...new Set(searchIds)]; // Dedup input
+        log(`Verification Complete. Valid: ${validStores.length}, Invalid: ${invalidIds.length}`);
+        
+        // 3. Update UI
+        verifyBtn.disabled = false;
+        verifyBtn.innerText = "Verify Stores";
 
-        // B. Lookup Algorithm
-        // For 13k items, a simple filter is fast enough. For 1M+, we'd use a Map/Object for O(1) lookup.
-        const dbMap = new Map(MOCK_DB.map(s => [s.id, s]));
+        if (validStores.length > 0) {
+            resultsContainer.style.display = 'block';
+            countMsg.innerText = `Verified ${validStores.length} stores via API.`;
+            currentPage = 1;
+            renderTable();
+        }
 
-        uniqueSearchIds.forEach(id => {
-            const store = dbMap.get(id);
-            if (store) {
-                // Check if Active
-                if (store.status === 'Active') {
-                    validStores.push(store);
-                } else {
-                    // It exists but is Inactive -> Treat as Invalid for this purpose
-                    invalidIds.push(`${id} (Inactive)`);
-                }
-            } else {
-                // ID doesn't exist
-                invalidIds.push(`${id} (Not Found)`);
-            }
-        });
-
-        // C. Render Results
-        currentPage = 1;
-        renderTable();
-        resultsContainer.style.display = 'block';
-        countMsg.innerText = `Found ${validStores.length} valid stores ready for targeting.`;
-
-        // D. Handle Errors
         if (invalidIds.length > 0) {
             document.getElementById('invalidIdList').innerText = invalidIds.join(', ');
             errorBox.style.display = 'block';
-            // Optional: Auto-scroll to error?
-            // errorBox.scrollIntoView({behavior: "smooth"}); 
         }
     }
 
-    // --- 4. PAGINATION LOGIC ---
+    // Pagination Rendering
     function renderTable() {
         const tbody = document.getElementById('storeTableBody');
         tbody.innerHTML = '';
-
         const start = (currentPage - 1) * ITEMS_PER_PAGE;
-        const end = start + ITEMS_PER_PAGE;
-        const pageData = validStores.slice(start, end);
-
-        if (pageData.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;">No valid stores found yet.</td></tr>';
-            updatePaginationControls(0);
-            return;
-        }
+        const pageData = validStores.slice(start, start + ITEMS_PER_PAGE);
 
         pageData.forEach(store => {
-            const row = `<tr>
-                <td>${store.id}</td>
-                <td>${store.name}</td>
-                <td class="status-active">${store.status}</td>
-            </tr>`;
-            tbody.innerHTML += row;
+            tbody.innerHTML += `
+                <tr>
+                    <td>${store.id}</td>
+                    <td>${store.name}</td>
+                    <td class="status-active">Active</td>
+                </tr>`;
         });
-
-        updatePaginationControls(validStores.length);
+        
+        const maxPage = Math.ceil(validStores.length / ITEMS_PER_PAGE) || 1;
+        document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${maxPage}`;
+        document.getElementById('prevPageBtn').disabled = currentPage === 1;
+        document.getElementById('nextPageBtn').disabled = currentPage === maxPage;
     }
 
     function changePage(dir) {
@@ -353,60 +401,120 @@
         renderTable();
     }
 
-    function updatePaginationControls(total) {
-        const maxPage = Math.ceil(total / ITEMS_PER_PAGE) || 1;
-        document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${maxPage}`;
-        document.getElementById('prevPageBtn').disabled = currentPage === 1;
-        document.getElementById('nextPageBtn').disabled = currentPage === maxPage;
-    }
 
-    // --- 5. FORM SUBMISSION ---
-    document.getElementById('opsForm').addEventListener('submit', function(e) {
+    // --- 3. SUBMISSION FLOW (THE CHAIN) ---
+
+    document.getElementById('opsForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
-        // Final Data Integrity Check
+        // Integrity Check
         if (invalidIds.length > 0) {
-            alert("Please fix the invalid Store IDs listed at the bottom before submitting.");
-            document.getElementById('submissionError').scrollIntoView({behavior: "smooth"});
+            alert("Please remove invalid Store IDs before submitting.");
             return;
         }
-        
         if (validStores.length === 0) {
-            alert("Please verify and select at least one valid store.");
+            alert("Please verify stores first.");
             return;
         }
 
         const btn = document.getElementById('submitBtn');
-        const originalText = btn.innerText;
-        btn.textContent = "Processing...";
         btn.disabled = true;
+        btn.innerText = "Processing...";
+        
+        try {
+            // A. Get Form Data
+            const title = document.getElementById('postTitle').value;
+            const category = document.getElementById('category').value;
+            const targetUserIds = validStores.map(s => s.userId); // Internal IDs needed for API
 
-        // Simulate API delay
-        setTimeout(() => {
-            alert(`Success! Adhoc Post created for ${validStores.length} stores.`);
-            btn.textContent = originalText;
+            // B. Parse CSVs
+            log("Parsing CSV Files...");
+            const taskData = await parseCSV(document.getElementById('csvTasks').files[0]);
+            const mergeData = await parseCSV(document.getElementById('csvMerges').files[0]);
+
+
+            // STEP 1: Create Channel
+            log("Creating Channel...");
+            // Endpoint: POST /channels
+            const channelPayload = { 
+                name: `${category}: ${title}`, 
+                type: "news",
+                visibleTo: targetUserIds 
+            };
+            const channelRes = await apiRequest('/channels', 'POST', channelPayload);
+            const channelID = channelRes.id; // Capture ID
+            log(`Channel Created: ${channelID}`);
+
+
+            // STEP 2: Create Task List
+            log("Creating Task List...");
+            // Endpoint: POST /tasks/{installationId}/lists
+            const listPayload = { title: `${title} Tasks`, assignedTo: targetUserIds };
+            const listRes = await apiRequest(`/tasks/${INSTALLATION_ID}/lists`, 'POST', listPayload);
+            const listID = listRes.id;
+
+
+            // STEP 3: Create Tasks (Loop)
+            log(`Creating ${taskData.length} Tasks...`);
+            for (const task of taskData) {
+                // Endpoint: POST /tasks/{installationId}/task
+                await apiRequest(`/tasks/${INSTALLATION_ID}/task`, 'POST', {
+                    listId: listID,
+                    title: task['Task Content'],
+                    description: task['Description'],
+                    dueDate: task['Due Date']
+                });
+            }
+
+
+            // STEP 4: Create News Post
+            log("Publishing News Post...");
+            // Endpoint: POST /channels/{channelID}/posts
+            const newsPayload = {
+                title: title,
+                content: `<p><strong>Category:</strong> ${category}</p><p>Please complete the attached task list.</p>`,
+                image: null 
+            };
+            await apiRequest(`/channels/${channelID}/posts`, 'POST', newsPayload);
+
+
+            // STEP 5: CSV Import (Field Merges)
+            // Usually this requires creating an Import Job first
+            if (mergeData.length > 0) {
+                log("Processing Field Merges...");
+                
+                // 5a. Create Import Job
+                // Endpoint: POST /users/imports (Assumed standard endpoint)
+                const importJob = await apiRequest('/users/imports', 'POST', { type: "update" });
+                const importId = importJob.id;
+                
+                // 5b. Upload Data
+                // Endpoint: POST /users/imports/{importId}
+                // Note: APIs often accept raw CSV string here, or JSON array. Sending JSON array for POC.
+                await apiRequest(`/users/imports/${importId}`, 'POST', mergeData);
+            }
+
+            log("All Operations Successful!", "success");
+            alert("Success! Adhoc Post, Tasks, and Field Updates created.");
+            btn.innerText = "Done";
+            btn.classList.add('finished');
+
+        } catch (err) {
+            log("Fatal Error: " + err.message, 'error');
+            alert("An error occurred. Check the console log at the bottom.");
             btn.disabled = false;
-        }, 1500);
+            btn.innerText = "Retry";
+        }
     });
 
-    // --- 6. FILE UI HELPERS ---
+    // File UI Helper
     document.querySelectorAll('input[type="file"]').forEach(input => {
         input.addEventListener('change', function() {
-            const fileName = this.files[0] ? this.files[0].name : "Drag and drop or click to select CSV";
-            this.parentElement.querySelector('.file-msg').textContent = fileName;
+            this.parentElement.querySelector('.file-msg').textContent = this.files[0].name;
             this.parentElement.classList.add('active');
         });
     });
 
-    // --- 7. PAST SUBMISSIONS HELPER ---
-    function loadPreviousPost(title) {
-        alert(`Loading editor for previous post: "${title}"...\n(This would pre-fill the form in a real app)`);
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-        document.getElementById('postTitle').value = title;
-        // Logic to pre-fill other fields would go here
-    }
-
 </script>
-
 </body>
 </html>
