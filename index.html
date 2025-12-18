@@ -253,10 +253,15 @@
 
 <script>
     // --- CONFIGURATION ---
-    // REPLACE THESE VALUES WITH YOUR ACTUAL CREDENTIALS
-    const API_TOKEN = 'YOUR_BEARER_TOKEN_HERE'; 
-    const INSTALLATION_ID = 'YOUR_TASKS_PLUGIN_INSTALLATION_ID';
-    const BASE_URL = 'https://app.staffbase.com/api'; // Adjusted for standard API path if needed
+// Check if CONFIG exists (handling the case where config.js is missing)
+    if (typeof CONFIG === 'undefined') {
+        alert("Error: config.js not found. Please create it with your API credentials.");
+        throw new Error("Configuration missing");
+    }
+
+    const API_TOKEN = CONFIG.API_TOKEN; 
+    const INSTALLATION_ID = CONFIG.INSTALLATION_ID;
+    const BASE_URL = CONFIG.BASE_URL;
 
     // --- UI HELPERS ---
     const logOutput = document.getElementById('console-output');
